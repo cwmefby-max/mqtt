@@ -144,11 +144,8 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
     prefs.setBool(key, value);
   }
 
-  void _vibrateInstan() async {
-    bool? hasVibrator = await Vibration.hasVibrator();
-    if (hasVibrator ?? false) {
-      Vibration.vibrate(duration: 50);
-    }
+  void _vibrateInstan() {
+    HapticFeedback.lightImpact();
   }
 
   void _triggerScan() async {
@@ -185,7 +182,6 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
   }
 
   void _toggleIotPanel() {
-    _vibrateInstan();
     if (isIotVisible) {
       _panelController.reverse().then((_) => setState(() => isIotVisible = false));
     } else {
@@ -406,11 +402,11 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildFloatBtn(Icons.my_location_rounded, () { _vibrateInstan(); setState(() => isFocusActive = true); Future.delayed(const Duration(milliseconds: 200), () => setState(() => isFocusActive = false)); }, isActive: isFocusActive),
+                  _buildFloatBtn(Icons.my_location_rounded, () { setState(() => isFocusActive = true); Future.delayed(const Duration(milliseconds: 200), () => setState(() => isFocusActive = false)); }, isActive: isFocusActive),
                   const SizedBox(width: 25),
-                  _buildFloatBtn(Icons.map_rounded, () { _vibrateInstan(); setState(() => isRouteActive = !isRouteActive); }, isActive: isRouteActive),
+                  _buildFloatBtn(Icons.map_rounded, () { setState(() => isRouteActive = !isRouteActive); }, isActive: isRouteActive),
                   const SizedBox(width: 25),
-                  _buildFloatBtn(Icons.explore_rounded, () { _vibrateInstan(); setState(() => isCompassActive = true); Future.delayed(const Duration(milliseconds: 200), () => setState(() => isCompassActive = false)); }, isActive: isCompassActive),
+                  _buildFloatBtn(Icons.explore_rounded, () { setState(() => isCompassActive = true); Future.delayed(const Duration(milliseconds: 200), () => setState(() => isCompassActive = false)); }, isActive: isCompassActive),
                 ],
               ),
             )
@@ -435,9 +431,7 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
         GestureDetector(
           onTapDown: (_) async {
             if (!isDisabled) {
-              _vibrateInstan();
-              await Future.delayed(const Duration(milliseconds: 50));
-              _vibrateInstan();
+              Vibration.vibrate(duration: 500);
               mqttService.publish('iot/starter', 'TRIGGER');
               setState(() => isStartActive = true);
             }
