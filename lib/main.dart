@@ -188,9 +188,7 @@ class _MainNavigatorState extends State<MainNavigator>
     for (int i = 0; i < 30; i++) {
       if (!mounted) return;
       setState(() => isAlarmOn = true);
-      await Future.delayed(
-        const Duration(milliseconds: 600),
-      ); // Diubah ke 600ms
+      await Future.delayed(const Duration(milliseconds: 600));
 
       if (!mounted) return;
       setState(() => isAlarmOn = false);
@@ -283,14 +281,60 @@ class _MainNavigatorState extends State<MainNavigator>
                     child: Column(
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start, // Align to top
                           children: [
                             _buildSignalBar("APP", mqttService.isConnected),
-                            const SizedBox(width: 12),
-                            _buildSignalBar("ESP", mqttService.isDeviceOnline),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 8.0),
+                                  child: Text(
+                                    "version 1.0.0 by Mefby",
+                                    style: TextStyle(
+                                      fontSize: 8,
+                                      color: Colors.grey.withOpacity(0.7),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    _buildTopIcon(
+                                      isAlarmOn
+                                          ? Icons.notifications_active
+                                          : Icons.notifications,
+                                      isAlarmOn,
+                                      () {
+                                        _vibrateInstan();
+                                        _triggerAlarmAnimation();
+                                      },
+                                      isDisabled:
+                                          isAlarmAnimating || isDeviceOffline,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    _buildTopIcon(
+                                      isDark
+                                          ? Icons.wb_sunny_rounded
+                                          : Icons.nightlight_round,
+                                      false,
+                                      widget.onThemeToggle,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    _buildTopIcon(
+                                      Icons.videogame_asset_rounded,
+                                      isIotVisible,
+                                      _toggleIotPanel,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ],
                         ),
-                        const SizedBox(height: 4), // Jarak diperkecil lagi
+                        const SizedBox(height: 4),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -315,33 +359,6 @@ class _MainNavigatorState extends State<MainNavigator>
                                     color: Colors.grey,
                                     fontWeight: FontWeight.w600,
                                   ),
-                                ),
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                _buildTopIcon(
-                                  isAlarmOn
-                                      ? Icons.notifications_active
-                                      : Icons.notifications,
-                                  isAlarmOn,
-                                  _triggerAlarmAnimation,
-                                  isDisabled:
-                                      isAlarmAnimating || isDeviceOffline,
-                                ),
-                                const SizedBox(width: 10),
-                                _buildTopIcon(
-                                  isDark
-                                      ? Icons.wb_sunny_rounded
-                                      : Icons.nightlight_round,
-                                  false,
-                                  widget.onThemeToggle,
-                                ),
-                                const SizedBox(width: 10),
-                                _buildTopIcon(
-                                  Icons.videogame_asset_rounded,
-                                  isIotVisible,
-                                  _toggleIotPanel,
                                 ),
                               ],
                             ),
@@ -383,28 +400,12 @@ class _MainNavigatorState extends State<MainNavigator>
                                   ),
                           ),
                         ),
-                        Stack(
-                          alignment: Alignment.center,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                _buildDot(_currentInfoPage == 0),
-                                const SizedBox(width: 6),
-                                _buildDot(_currentInfoPage == 1),
-                              ],
-                            ),
-                            Positioned(
-                              right: 0,
-                              child: Text(
-                                "version 1.0.0 by Mefby",
-                                style: TextStyle(
-                                  fontSize: 8,
-                                  color: Colors.grey.withOpacity(0.7),
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
+                            _buildDot(_currentInfoPage == 0),
+                            const SizedBox(width: 6),
+                            _buildDot(_currentInfoPage == 1),
                           ],
                         ),
                       ],
@@ -643,8 +644,10 @@ class _MainNavigatorState extends State<MainNavigator>
             ),
           ),
         GestureDetector(
-          onTapDown: (_) {
+          onTapDown: (_) async {
             if (!isDisabled) {
+              _vibrateInstan();
+              await Future.delayed(const Duration(milliseconds: 50));
               _vibrateInstan();
               mqttService.publish('iot/starter', 'TRIGGER');
               setState(() => isStartActive = true);
@@ -864,15 +867,15 @@ class _MainNavigatorState extends State<MainNavigator>
 
   Widget _buildSignalBar(String label, bool isConnected) {
     return Stack(
-      alignment: Alignment.topLeft,
+      alignment: Alignment.bottomLeft,
       children: [
-        const SizedBox(width: 26, height: 18), // Final adjustment
+        const SizedBox(width: 28, height: 16),
         Positioned(
           bottom: 0,
-          right: 0,
+          left: 17,
           child: SizedBox(
-            width: 16, // Final adjustment
-            height: 9, // Final adjustment
+            width: 11,
+            height: 8,
             child: CustomPaint(
               painter: SignalBarPainter(
                 isConnected: isConnected,
@@ -888,7 +891,7 @@ class _MainNavigatorState extends State<MainNavigator>
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 9, // Final adjustment
+              fontSize: 8,
               fontWeight: FontWeight.bold,
               color: isConnected
                   ? (widget.isDark ? Colors.white70 : const Color(0xFF2C3E50))
