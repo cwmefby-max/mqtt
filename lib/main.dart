@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vibration/vibration.dart';
 import 'mqtt_service.dart';
 
 void main() {
@@ -143,8 +144,11 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
     prefs.setBool(key, value);
   }
 
-  void _vibrateInstan() {
-    HapticFeedback.lightImpact();
+  void _vibrateInstan() async {
+    bool? hasVibrator = await Vibration.hasVibrator();
+    if (hasVibrator ?? false) {
+      Vibration.vibrate(duration: 50);
+    }
   }
 
   void _triggerScan() async {
@@ -559,7 +563,7 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
           ),
         ),
         Positioned(
-          top: 0,
+          bottom: 0, // Adjusted for alignment
           left: 0,
           child: Text(
             label,
