@@ -101,12 +101,19 @@ class _MainNavigatorState extends State<MainNavigator>
   late PageController _vehiclePageController;
   final int _currentVirtualPage = 10000;
   Timer? _vehicleInfoTimer;
+  int _currentInfoPage = 0;
 
   @override
   void initState() {
     super.initState();
     _infoPageController = PageController(initialPage: _currentVirtualPage);
     _vehiclePageController = PageController(initialPage: _currentVirtualPage);
+
+    _infoPageController.addListener(() {
+      setState(() {
+        _currentInfoPage = _infoPageController.page!.round() % 2;
+      });
+    });
 
     _scanController = AnimationController(
       vsync: this,
@@ -179,9 +186,7 @@ class _MainNavigatorState extends State<MainNavigator>
     for (int i = 0; i < 30; i++) {
       if (!mounted) return;
       setState(() => isAlarmOn = true);
-      await Future.delayed(
-        const Duration(milliseconds: 500),
-      ); // <-- Diperlambat
+      await Future.delayed(const Duration(milliseconds: 500));
 
       if (!mounted) return;
       setState(() => isAlarmOn = false);
@@ -375,9 +380,9 @@ class _MainNavigatorState extends State<MainNavigator>
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                _buildDot(true),
+                                _buildDot(_currentInfoPage == 0),
                                 const SizedBox(width: 6),
-                                _buildDot(false),
+                                _buildDot(_currentInfoPage == 1),
                               ],
                             ),
                             Positioned(
@@ -852,13 +857,13 @@ class _MainNavigatorState extends State<MainNavigator>
     return Stack(
       alignment: Alignment.topLeft,
       children: [
-        const SizedBox(width: 35, height: 30), // <-- Ukuran diperkecil
+        const SizedBox(width: 35, height: 30),
         Positioned(
           bottom: 2,
           right: 0,
           child: SizedBox(
-            width: 22, // <-- Ukuran diperkecil
-            height: 14, // <-- Ukuran diperkecil
+            width: 22,
+            height: 14,
             child: CustomPaint(
               painter: SignalBarPainter(
                 isConnected: isConnected,
@@ -874,7 +879,7 @@ class _MainNavigatorState extends State<MainNavigator>
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 12, // <-- Ukuran diperkecil
+              fontSize: 12,
               fontWeight: FontWeight.bold,
               color: isConnected
                   ? (widget.isDark ? Colors.white70 : const Color(0xFF2C3E50))
@@ -904,7 +909,6 @@ class DottedCirclePainter extends CustomPainter {
     for (int i = 0; i < dotsCount; i++) {
       double angle = (2 * math.pi / dotsCount) * i;
       if (angle <= currentArc) {
-        // Mengubah offset sudut untuk memulai dari bawah
         double x = radius + radius * math.cos(angle + math.pi / 2);
         double y = radius + radius * math.sin(angle + math.pi / 2);
         canvas.drawCircle(Offset(x, y), 2.2, paint);
