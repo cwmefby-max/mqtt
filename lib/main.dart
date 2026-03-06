@@ -36,22 +36,30 @@ class _GemparaAppStage extends State<GemparaApp> {
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      systemNavigationBarColor: isDarkMode ? const Color(0xFF1E272E) : const Color(0xFFF8F9FB),
-      systemNavigationBarIconBrightness: isDarkMode ? Brightness.light : Brightness.dark,
-    ));
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        systemNavigationBarColor: isDarkMode
+            ? const Color(0xFF1E272E)
+            : const Color(0xFFF8F9FB),
+        systemNavigationBarIconBrightness: isDarkMode
+            ? Brightness.light
+            : Brightness.dark,
+      ),
+    );
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
       theme: ThemeData(
-          brightness: Brightness.light,
-          scaffoldBackgroundColor: const Color(0xFFF8F9FB),
-          useMaterial3: true),
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: const Color(0xFFF8F9FB),
+        useMaterial3: true,
+      ),
       darkTheme: ThemeData(
-          brightness: Brightness.dark,
-          scaffoldBackgroundColor: const Color(0xFF1E272E),
-          useMaterial3: true),
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF1E272E),
+        useMaterial3: true,
+      ),
       home: MainNavigator(onThemeToggle: toggleTheme, isDark: isDarkMode),
     );
   }
@@ -60,13 +68,18 @@ class _GemparaAppStage extends State<GemparaApp> {
 class MainNavigator extends StatefulWidget {
   final VoidCallback onThemeToggle;
   final bool isDark;
-  const MainNavigator({super.key, required this.onThemeToggle, required this.isDark});
+  const MainNavigator({
+    super.key,
+    required this.onThemeToggle,
+    required this.isDark,
+  });
 
   @override
   State<MainNavigator> createState() => _MainNavigatorState();
 }
 
-class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateMixin {
+class _MainNavigatorState extends State<MainNavigator>
+    with TickerProviderStateMixin {
   bool isIotVisible = true;
   bool isLocked = true;
   bool isRelayOn = false;
@@ -95,11 +108,19 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
     _infoPageController = PageController(initialPage: _currentVirtualPage);
     _vehiclePageController = PageController(initialPage: _currentVirtualPage);
 
-    _scanController = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
+    _scanController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
 
-    _panelController = AnimationController(vsync: this, duration: const Duration(milliseconds: 250));
-    _panelSlideAnimation = Tween<Offset>(begin: const Offset(0, -1.2), end: Offset.zero).animate(
-        CurvedAnimation(parent: _panelController, curve: Curves.easeOutCubic));
+    _panelController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+    _panelSlideAnimation =
+        Tween<Offset>(begin: const Offset(0, -1.2), end: Offset.zero).animate(
+          CurvedAnimation(parent: _panelController, curve: Curves.easeOutCubic),
+        );
 
     if (isIotVisible) _panelController.forward();
 
@@ -158,7 +179,9 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
     for (int i = 0; i < 30; i++) {
       if (!mounted) return;
       setState(() => isAlarmOn = true);
-      await Future.delayed(const Duration(milliseconds: 250));
+      await Future.delayed(
+        const Duration(milliseconds: 500),
+      ); // <-- Diperlambat
 
       if (!mounted) return;
       setState(() => isAlarmOn = false);
@@ -174,7 +197,9 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
   void _toggleIotPanel() {
     _vibrateInstan();
     if (isIotVisible) {
-      _panelController.reverse().then((_) => setState(() => isIotVisible = false));
+      _panelController.reverse().then(
+        (_) => setState(() => isIotVisible = false),
+      );
     } else {
       setState(() => isIotVisible = true);
       _panelController.forward();
@@ -191,11 +216,17 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
     super.dispose();
   }
 
-  BoxDecoration neuBox({bool isPressed = false, double borderRadius = 20, bool isDisabled = false}) {
+  BoxDecoration neuBox({
+    bool isPressed = false,
+    double borderRadius = 20,
+    bool isDisabled = false,
+  }) {
     bool isDark = widget.isDark;
     Color bg = isDark ? const Color(0xFF1E272E) : const Color(0xFFFDFDFD);
     if (isDisabled) bg = bg.withOpacity(0.5);
-    Color shadowDark = isDark ? Colors.black.withOpacity(0.4) : const Color(0xFFD1D9E6).withOpacity(0.5);
+    Color shadowDark = isDark
+        ? Colors.black.withOpacity(0.4)
+        : const Color(0xFFD1D9E6).withOpacity(0.5);
 
     return BoxDecoration(
       color: bg,
@@ -222,7 +253,11 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
     return Scaffold(
       body: Stack(
         children: [
-          Container(width: double.infinity, height: double.infinity, color: isDark ? const Color(0xFF151E24) : const Color(0xFFF0F2F5)),
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            color: isDark ? const Color(0xFF151E24) : const Color(0xFFF0F2F5),
+          ),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(15.0),
@@ -249,45 +284,113 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("SmartLock", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: isDark ? Colors.white : const Color(0xFF2C3E50))),
-                                const Text("Pati, Jawa Tengah", style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
+                                Text(
+                                  "SmartLock",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 22,
+                                    color: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF2C3E50),
+                                  ),
+                                ),
+                                const Text(
+                                  "Pati, Jawa Tengah",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ],
                             ),
                             Row(
                               children: [
                                 _buildTopIcon(
-                                  isAlarmOn ? Icons.notifications_active : Icons.notifications,
+                                  isAlarmOn
+                                      ? Icons.notifications_active
+                                      : Icons.notifications,
                                   isAlarmOn,
                                   _triggerAlarmAnimation,
-                                  isDisabled: isAlarmAnimating || isDeviceOffline,
+                                  isDisabled:
+                                      isAlarmAnimating || isDeviceOffline,
                                 ),
                                 const SizedBox(width: 10),
-                                _buildTopIcon(isDark ? Icons.wb_sunny_rounded : Icons.nightlight_round, false, widget.onThemeToggle),
+                                _buildTopIcon(
+                                  isDark
+                                      ? Icons.wb_sunny_rounded
+                                      : Icons.nightlight_round,
+                                  false,
+                                  widget.onThemeToggle,
+                                ),
                                 const SizedBox(width: 10),
-                                _buildTopIcon(Icons.videogame_asset_rounded, isIotVisible, _toggleIotPanel),
+                                _buildTopIcon(
+                                  Icons.videogame_asset_rounded,
+                                  isIotVisible,
+                                  _toggleIotPanel,
+                                ),
                               ],
-                            )
+                            ),
                           ],
                         ),
                         const SizedBox(height: 15),
-                        Divider(color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05)),
+                        Divider(
+                          color: isDark
+                              ? Colors.white.withOpacity(0.05)
+                              : Colors.black.withOpacity(0.05),
+                        ),
                         SizedBox(
                           height: 60,
                           child: PageView.builder(
                             controller: _infoPageController,
                             itemBuilder: (context, index) => index % 2 == 0
-                                ? Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [_buildStat("SPEED", "0 km/h"), _buildStat("JARAK", "1.2 km"), _buildStat("ETA", "4 m"), _buildStat("SUHU", "32°")])
-                                : Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [_buildStat("BATTERY", "12.8V"), _buildStat("FUEL", "85%"), _buildStat("LAST", mqttService.statusPower), _buildStat("STATUS", "Aman")]),
+                                ? Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceAround,
+                                    children: [
+                                      _buildStat("SPEED", "0 km/h"),
+                                      _buildStat("JARAK", "1.2 km"),
+                                      _buildStat("ETA", "4 m"),
+                                      _buildStat("SUHU", "32°"),
+                                    ],
+                                  )
+                                : Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceAround,
+                                    children: [
+                                      _buildStat("BATTERY", "12.8V"),
+                                      _buildStat("FUEL", "85%"),
+                                      _buildStat(
+                                        "LAST",
+                                        mqttService.statusPower,
+                                      ),
+                                      _buildStat("STATUS", "Aman"),
+                                    ],
+                                  ),
                           ),
                         ),
                         Stack(
                           alignment: Alignment.center,
                           children: [
-                            Row(mainAxisAlignment: MainAxisAlignment.center, children: [_buildDot(true), const SizedBox(width: 6), _buildDot(false)]),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _buildDot(true),
+                                const SizedBox(width: 6),
+                                _buildDot(false),
+                              ],
+                            ),
                             Positioned(
                               right: 0,
-                              child: Text("version 1.0.0 by Mefby", style: TextStyle(fontSize: 8, color: Colors.grey.withOpacity(0.7), fontWeight: FontWeight.bold)),
-                            )
+                              child: Text(
+                                "version 1.0.0 by Mefby",
+                                style: TextStyle(
+                                  fontSize: 8,
+                                  color: Colors.grey.withOpacity(0.7),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ],
@@ -304,65 +407,158 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
                               padding: const EdgeInsets.only(top: 15),
                               child: Container(
                                 width: double.infinity,
-                                padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 30),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 25,
+                                  vertical: 30,
+                                ),
                                 decoration: neuBox(borderRadius: 30),
                                 child: Column(
                                   children: [
-                                    Text("KONTROL UNIT", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: isDark ? Colors.white70 : Colors.black54)),
+                                    Text(
+                                      "KONTROL UNIT",
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.5,
+                                        color: isDark
+                                            ? Colors.white70
+                                            : Colors.black54,
+                                      ),
+                                    ),
                                     const SizedBox(height: 4),
                                     SizedBox(
                                       height: 15,
                                       child: PageView.builder(
                                         controller: _vehiclePageController,
                                         scrollDirection: Axis.vertical,
-                                        itemBuilder: (context, index) => Center(child: Text(index % 2 == 0 ? "Aerox 155 VVA" : "W 3601 QY", style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold))),
+                                        itemBuilder: (context, index) => Center(
+                                          child: Text(
+                                            index % 2 == 0
+                                                ? "Aerox 155 VVA"
+                                                : "W 3601 QY",
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.grey,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
                                       ),
                                     ),
                                     const Spacer(),
-                                    _buildStartButton(mqttService, isDeviceOffline),
+                                    _buildStartButton(
+                                      mqttService,
+                                      isDeviceOffline,
+                                    ),
                                     const Spacer(),
                                     Row(
                                       children: [
-                                        Expanded(child: _buildVerticalGridBtn(isRelayOn ? "ON" : "OFF", Icons.power_settings_new_rounded, isRelayOn, () {
-                                          if (!isLocked) {
-                                            _vibrateInstan();
-                                            final newState = !isRelayOn;
-                                            mqttService.publish('iot/power', newState ? 'ON' : 'OFF');
-                                            setState(() => isRelayOn = newState);
-                                            _saveButtonState('isRelayOn', newState);
-                                            if (newState) _triggerScan();
-                                          }
-                                        }, isDisabled: isLocked || isDeviceOffline)),
+                                        Expanded(
+                                          child: _buildVerticalGridBtn(
+                                            isRelayOn ? "ON" : "OFF",
+                                            Icons.power_settings_new_rounded,
+                                            isRelayOn,
+                                            () {
+                                              if (!isLocked) {
+                                                _vibrateInstan();
+                                                final newState = !isRelayOn;
+                                                mqttService.publish(
+                                                  'iot/power',
+                                                  newState ? 'ON' : 'OFF',
+                                                );
+                                                setState(
+                                                  () => isRelayOn = newState,
+                                                );
+                                                _saveButtonState(
+                                                  'isRelayOn',
+                                                  newState,
+                                                );
+                                                if (newState) _triggerScan();
+                                              }
+                                            },
+                                            isDisabled:
+                                                isLocked || isDeviceOffline,
+                                          ),
+                                        ),
                                         const SizedBox(width: 15),
                                         Expanded(
                                           child: Column(
                                             children: [
-                                              _buildHoldBtn("SEAT", Icons.archive_rounded, isSeatActive, isRelayOn || isDeviceOffline, (val) {
-                                                if (!isRelayOn) {
-                                                  if (val) { _vibrateInstan(); mqttService.publish('iot/seat', 'TRIGGER'); }
-                                                  setState(() => isSeatActive = val);
-                                                }
-                                              }),
+                                              _buildHoldBtn(
+                                                "SEAT",
+                                                Icons.archive_rounded,
+                                                isSeatActive,
+                                                isRelayOn || isDeviceOffline,
+                                                (val) {
+                                                  if (!isRelayOn) {
+                                                    if (val) {
+                                                      _vibrateInstan();
+                                                      mqttService.publish(
+                                                        'iot/seat',
+                                                        'TRIGGER',
+                                                      );
+                                                    }
+                                                    setState(
+                                                      () => isSeatActive = val,
+                                                    );
+                                                  }
+                                                },
+                                              ),
                                               const SizedBox(height: 15),
-                                              _buildHoldBtn("FUEL", Icons.local_gas_station_rounded, isFuelActive, isRelayOn || isDeviceOffline, (val) {
-                                                if (!isRelayOn) {
-                                                  if (val) { _vibrateInstan(); mqttService.publish('iot/fuel', 'TRIGGER'); }
-                                                  setState(() => isFuelActive = val);
-                                                }
-                                              }),
+                                              _buildHoldBtn(
+                                                "FUEL",
+                                                Icons.local_gas_station_rounded,
+                                                isFuelActive,
+                                                isRelayOn || isDeviceOffline,
+                                                (val) {
+                                                  if (!isRelayOn) {
+                                                    if (val) {
+                                                      _vibrateInstan();
+                                                      mqttService.publish(
+                                                        'iot/fuel',
+                                                        'TRIGGER',
+                                                      );
+                                                    }
+                                                    setState(
+                                                      () => isFuelActive = val,
+                                                    );
+                                                  }
+                                                },
+                                              ),
                                             ],
                                           ),
                                         ),
                                         const SizedBox(width: 15),
-                                        Expanded(child: _buildVerticalGridBtn(isLocked ? "LOCKED" : "UNLOCK", isLocked ? Icons.lock_rounded : Icons.lock_open_rounded, isLocked, () {
-                                          if (!isRelayOn) {
-                                            _vibrateInstan();
-                                            final newState = !isLocked;
-                                            mqttService.publish('iot/lock', newState ? 'LOCKED' : 'UNLOCK');
-                                            setState(() => isLocked = newState);
-                                            _saveButtonState('isLocked', newState);
-                                          }
-                                        }, isDisabled: isRelayOn || isDeviceOffline)),
+                                        Expanded(
+                                          child: _buildVerticalGridBtn(
+                                            isLocked ? "LOCKED" : "UNLOCK",
+                                            isLocked
+                                                ? Icons.lock_rounded
+                                                : Icons.lock_open_rounded,
+                                            isLocked,
+                                            () {
+                                              if (!isRelayOn) {
+                                                _vibrateInstan();
+                                                final newState = !isLocked;
+                                                mqttService.publish(
+                                                  'iot/lock',
+                                                  newState
+                                                      ? 'LOCKED'
+                                                      : 'UNLOCK',
+                                                );
+                                                setState(
+                                                  () => isLocked = newState,
+                                                );
+                                                _saveButtonState(
+                                                  'isLocked',
+                                                  newState,
+                                                );
+                                              }
+                                            },
+                                            isDisabled:
+                                                isRelayOn || isDeviceOffline,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ],
@@ -380,18 +576,37 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
           ),
           if (!isIotVisible)
             Positioned(
-              bottom: 40, left: 0, right: 0,
+              bottom: 40,
+              left: 0,
+              right: 0,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildFloatBtn(Icons.my_location_rounded, () { _vibrateInstan(); setState(() => isFocusActive = true); Future.delayed(const Duration(milliseconds: 200), () => setState(() => isFocusActive = false)); }, isActive: isFocusActive),
+                  _buildFloatBtn(Icons.my_location_rounded, () {
+                    _vibrateInstan();
+                    setState(() => isFocusActive = true);
+                    Future.delayed(
+                      const Duration(milliseconds: 200),
+                      () => setState(() => isFocusActive = false),
+                    );
+                  }, isActive: isFocusActive),
                   const SizedBox(width: 25),
-                  _buildFloatBtn(Icons.map_rounded, () { _vibrateInstan(); setState(() => isRouteActive = !isRouteActive); }, isActive: isRouteActive),
+                  _buildFloatBtn(Icons.map_rounded, () {
+                    _vibrateInstan();
+                    setState(() => isRouteActive = !isRouteActive);
+                  }, isActive: isRouteActive),
                   const SizedBox(width: 25),
-                  _buildFloatBtn(Icons.explore_rounded, () { _vibrateInstan(); setState(() => isCompassActive = true); Future.delayed(const Duration(milliseconds: 200), () => setState(() => isCompassActive = false)); }, isActive: isCompassActive),
+                  _buildFloatBtn(Icons.explore_rounded, () {
+                    _vibrateInstan();
+                    setState(() => isCompassActive = true);
+                    Future.delayed(
+                      const Duration(milliseconds: 200),
+                      () => setState(() => isCompassActive = false),
+                    );
+                  }, isActive: isCompassActive),
                 ],
               ),
-            )
+            ),
         ],
       ),
     );
@@ -406,8 +621,11 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
           AnimatedBuilder(
             animation: _scanController,
             builder: (context, child) => SizedBox(
-              width: 175, height: 175,
-              child: CustomPaint(painter: DottedCirclePainter(progress: _scanController.value)),
+              width: 175,
+              height: 175,
+              child: CustomPaint(
+                painter: DottedCirclePainter(progress: _scanController.value),
+              ),
             ),
           ),
         GestureDetector(
@@ -423,13 +641,27 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
           child: Opacity(
             opacity: isDisabled ? 0.4 : 1.0,
             child: Container(
-              width: 140, height: 140,
-              decoration: neuBox(isPressed: isStartActive, borderRadius: 80, isDisabled: isDisabled),
+              width: 140,
+              height: 140,
+              decoration: neuBox(
+                isPressed: isStartActive,
+                borderRadius: 80,
+                isDisabled: isDisabled,
+              ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.bolt_rounded, color: isStartActive ? Colors.greenAccent : (widget.isDark ? Colors.white : Colors.black54), size: 60),
-                  const Text("START ENGINE", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                  Icon(
+                    Icons.bolt_rounded,
+                    color: isStartActive
+                        ? Colors.greenAccent
+                        : (widget.isDark ? Colors.white : Colors.black54),
+                    size: 60,
+                  ),
+                  const Text(
+                    "START ENGINE",
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                  ),
                 ],
               ),
             ),
@@ -439,20 +671,45 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
     );
   }
 
-  Widget _buildVerticalGridBtn(String label, IconData icon, bool isActive, VoidCallback onTap, {bool isDisabled = false}) {
+  Widget _buildVerticalGridBtn(
+    String label,
+    IconData icon,
+    bool isActive,
+    VoidCallback onTap, {
+    bool isDisabled = false,
+  }) {
     return GestureDetector(
-      onTap: () { if(!isDisabled) onTap(); },
+      onTap: () {
+        if (!isDisabled) onTap();
+      },
       child: Opacity(
         opacity: isDisabled ? 0.3 : 1.0,
         child: Container(
           height: 125,
-          decoration: neuBox(isPressed: isActive, borderRadius: 20, isDisabled: isDisabled),
+          decoration: neuBox(
+            isPressed: isActive,
+            borderRadius: 20,
+            isDisabled: isDisabled,
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 30, color: isActive ? const Color(0xFFFF7675) : (widget.isDark ? Colors.white70 : Colors.black54)),
+              Icon(
+                icon,
+                size: 30,
+                color: isActive
+                    ? const Color(0xFFFF7675)
+                    : (widget.isDark ? Colors.white70 : Colors.black54),
+              ),
               const SizedBox(height: 10),
-              Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: widget.isDark ? Colors.white : const Color(0xFF2C3E50))),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: widget.isDark ? Colors.white : const Color(0xFF2C3E50),
+                ),
+              ),
             ],
           ),
         ),
@@ -460,22 +717,48 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
     );
   }
 
-  Widget _buildHoldBtn(String label, IconData icon, bool isActive, bool isDisabled, Function(bool) onChanged) {
+  Widget _buildHoldBtn(
+    String label,
+    IconData icon,
+    bool isActive,
+    bool isDisabled,
+    Function(bool) onChanged,
+  ) {
     return GestureDetector(
-      onTapDown: (_) { if (!isDisabled) onChanged(true); },
+      onTapDown: (_) {
+        if (!isDisabled) onChanged(true);
+      },
       onTapUp: (_) => onChanged(false),
       onTapCancel: () => onChanged(false),
       child: Opacity(
         opacity: isDisabled ? 0.3 : 1.0,
         child: Container(
-          height: 55, width: double.infinity,
-          decoration: neuBox(isPressed: isActive, borderRadius: 15, isDisabled: isDisabled),
+          height: 55,
+          width: double.infinity,
+          decoration: neuBox(
+            isPressed: isActive,
+            borderRadius: 15,
+            isDisabled: isDisabled,
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 20, color: isActive ? Colors.orangeAccent : (widget.isDark ? Colors.white70 : Colors.black54)),
+              Icon(
+                icon,
+                size: 20,
+                color: isActive
+                    ? Colors.orangeAccent
+                    : (widget.isDark ? Colors.white70 : Colors.black54),
+              ),
               const SizedBox(width: 10),
-              Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: widget.isDark ? Colors.white : const Color(0xFF2C3E50))),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: widget.isDark ? Colors.white : const Color(0xFF2C3E50),
+                ),
+              ),
             ],
           ),
         ),
@@ -483,52 +766,99 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
     );
   }
 
-  Widget _buildTopIcon(IconData icon, bool active, VoidCallback onTap, {bool isDisabled = false}) =>
-      GestureDetector(
-        onTap: isDisabled ? null : onTap,
-        child: Opacity(
-          opacity: isDisabled ? 0.5 : 1.0,
-          child: Container(
-              width: 42,
-              height: 42,
-              decoration: neuBox(isPressed: active, borderRadius: 12, isDisabled: isDisabled),
-              child: Icon(icon,
-                  size: 20,
-                  color: active
-                      ? const Color(0xFFFF7675)
-                      : (widget.isDark ? Colors.white : const Color(0xFF2C3E50)))),
+  Widget _buildTopIcon(
+    IconData icon,
+    bool active,
+    VoidCallback onTap, {
+    bool isDisabled = false,
+  }) => GestureDetector(
+    onTap: isDisabled ? null : onTap,
+    child: Opacity(
+      opacity: isDisabled ? 0.5 : 1.0,
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: neuBox(
+          isPressed: active,
+          borderRadius: 12,
+          isDisabled: isDisabled,
         ),
-      );
+        child: Icon(
+          icon,
+          size: 20,
+          color: active
+              ? const Color(0xFFFF7675)
+              : (widget.isDark ? Colors.white : const Color(0xFF2C3E50)),
+        ),
+      ),
+    ),
+  );
 
-  Widget _buildDot(bool active) => Container(width: 6, height: 6, decoration: BoxDecoration(shape: BoxShape.circle, color: active ? Colors.blueAccent : Colors.grey.withOpacity(0.3)));
-  
+  Widget _buildDot(bool active) => Container(
+    width: 6,
+    height: 6,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: active ? Colors.blueAccent : Colors.grey.withOpacity(0.3),
+    ),
+  );
+
   Widget _buildStat(String label, String value) {
     final defaultColor = widget.isDark ? Colors.white : const Color(0xFF2C3E50);
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: defaultColor)),
-        Text(label, style: const TextStyle(fontSize: 8, color: Colors.grey, fontWeight: FontWeight.bold))
-      ]
+        Text(
+          value,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            color: defaultColor,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 8,
+            color: Colors.grey,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildFloatBtn(IconData icon, VoidCallback onTap, {required bool isActive}) => GestureDetector(
+  Widget _buildFloatBtn(
+    IconData icon,
+    VoidCallback onTap, {
+    required bool isActive,
+  }) => GestureDetector(
     onTap: onTap,
-    child: Container(width: 50, height: 50, decoration: neuBox(isPressed: isActive, borderRadius: 25), child: Icon(icon, size: 20, color: isActive ? Colors.blueAccent : (widget.isDark ? Colors.white : const Color(0xFF2C3E50)))),
+    child: Container(
+      width: 50,
+      height: 50,
+      decoration: neuBox(isPressed: isActive, borderRadius: 25),
+      child: Icon(
+        icon,
+        size: 20,
+        color: isActive
+            ? Colors.blueAccent
+            : (widget.isDark ? Colors.white : const Color(0xFF2C3E50)),
+      ),
+    ),
   );
 
   Widget _buildSignalBar(String label, bool isConnected) {
     return Stack(
       alignment: Alignment.topLeft,
       children: [
-        const SizedBox(width: 45, height: 35),
+        const SizedBox(width: 35, height: 30), // <-- Ukuran diperkecil
         Positioned(
-          bottom: 0,
+          bottom: 2,
           right: 0,
           child: SizedBox(
-            width: 30,
-            height: 18,
+            width: 22, // <-- Ukuran diperkecil
+            height: 14, // <-- Ukuran diperkecil
             child: CustomPaint(
               painter: SignalBarPainter(
                 isConnected: isConnected,
@@ -539,12 +869,12 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
           ),
         ),
         Positioned(
-          top: 0,
+          top: 2,
           left: 0,
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 12, // <-- Ukuran diperkecil
               fontWeight: FontWeight.bold,
               color: isConnected
                   ? (widget.isDark ? Colors.white70 : const Color(0xFF2C3E50))
@@ -574,15 +904,17 @@ class DottedCirclePainter extends CustomPainter {
     for (int i = 0; i < dotsCount; i++) {
       double angle = (2 * math.pi / dotsCount) * i;
       if (angle <= currentArc) {
-        double x = radius + radius * math.cos(angle - math.pi / 2);
-        double y = radius + radius * math.sin(angle - math.pi / 2);
+        // Mengubah offset sudut untuk memulai dari bawah
+        double x = radius + radius * math.cos(angle + math.pi / 2);
+        double y = radius + radius * math.sin(angle + math.pi / 2);
         canvas.drawCircle(Offset(x, y), 2.2, paint);
       }
     }
   }
 
   @override
-  bool shouldRepaint(DottedCirclePainter oldDelegate) => oldDelegate.progress != progress;
+  bool shouldRepaint(DottedCirclePainter oldDelegate) =>
+      oldDelegate.progress != progress;
 }
 
 class SignalBarPainter extends CustomPainter {
@@ -602,18 +934,26 @@ class SignalBarPainter extends CustomPainter {
     final double barWidth = size.width / 4.5;
     final double barSpacing = barWidth / 4;
 
-    final heights = [size.height * 0.4, size.height * 0.6, size.height * 0.8, size.height * 1.0];
+    final heights = [
+      size.height * 0.4,
+      size.height * 0.6,
+      size.height * 0.8,
+      size.height * 1.0,
+    ];
 
     for (int i = 0; i < 4; i++) {
       canvas.drawRRect(
-          RRect.fromRectAndRadius(
-              Rect.fromLTWH(
-                  i * (barWidth + barSpacing),
-                  size.height - heights[i],
-                  barWidth,
-                  heights[i]),
-              const Radius.circular(1)),
-          paint);
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(
+            i * (barWidth + barSpacing),
+            size.height - heights[i],
+            barWidth,
+            heights[i],
+          ),
+          const Radius.circular(1),
+        ),
+        paint,
+      );
     }
   }
 
