@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
@@ -45,13 +44,13 @@ class _GemparaAppStage extends State<GemparaApp> {
       debugShowCheckedModeBanner: false,
       themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
       theme: ThemeData(
-        brightness: Brightness.light,
-        scaffoldBackgroundColor: const Color(0xFFF8F9FB),
-        useMaterial3: true),
+          brightness: Brightness.light,
+          scaffoldBackgroundColor: const Color(0xFFF8F9FB),
+          useMaterial3: true),
       darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF1E272E),
-        useMaterial3: true),
+          brightness: Brightness.dark,
+          scaffoldBackgroundColor: const Color(0xFF1E272E),
+          useMaterial3: true),
       home: MainNavigator(onThemeToggle: toggleTheme, isDark: isDarkMode),
     );
   }
@@ -85,8 +84,7 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
 
   late PageController _infoPageController;
   late PageController _vehiclePageController;
-  int _currentVirtualPage = 10000;
-  Timer? _globalTimer;
+  final int _currentVirtualPage = 10000;
 
   @override
   void initState() {
@@ -98,25 +96,14 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
 
     _panelController = AnimationController(vsync: this, duration: const Duration(milliseconds: 250));
     _panelSlideAnimation = Tween<Offset>(begin: const Offset(0, -1.2), end: Offset.zero).animate(
-      CurvedAnimation(parent: _panelController, curve: Curves.easeOutCubic));
+        CurvedAnimation(parent: _panelController, curve: Curves.easeOutCubic));
 
     if (isIotVisible) _panelController.forward();
 
-    // Auto-connect to MQTT broker after the first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final mqttService = Provider.of<MQTTService>(context, listen: false);
       if (!mqttService.isConnected) {
-        // Using broker from previous implementation
         mqttService.connect('test.mosquitto.org', 'flutter_gempara_client');
-      }
-    });
-
-    _globalTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
-      if (mounted) {
-        _currentVirtualPage++;
-        _infoPageController.animateToPage(_currentVirtualPage, duration: const Duration(milliseconds: 800), curve: Curves.easeInOut);
-        _vehiclePageController.animateToPage(_currentVirtualPage, duration: const Duration(milliseconds: 600), curve: Curves.easeInOut);
-        setState(() {});
       }
     });
   }
@@ -144,7 +131,6 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
 
   @override
   void dispose() {
-    _globalTimer?.cancel();
     _scanController.dispose();
     _panelController.dispose();
     _infoPageController.dispose();
@@ -156,7 +142,6 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
     bool isDark = widget.isDark;
     Color bg = isDark ? const Color(0xFF1E272E) : const Color(0xFFFDFDFD);
     if (isDisabled) bg = bg.withOpacity(0.5);
-
     Color shadowDark = isDark ? Colors.black.withOpacity(0.4) : const Color(0xFFD1D9E6).withOpacity(0.5);
 
     return BoxDecoration(
@@ -178,9 +163,7 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
   @override
   Widget build(BuildContext context) {
     bool isDark = widget.isDark;
-    int activePageIndex = _currentVirtualPage % 2;
-    // Access MQTT service for publishing messages
-    final mqttService = Provider.of<MQTTService>(context, listen: false);
+    final mqttService = Provider.of<MQTTService>(context);
 
     return Scaffold(
       body: Stack(
@@ -191,7 +174,6 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
               padding: const EdgeInsets.all(15.0),
               child: Column(
                 children: [
-                  // --- HEADER ---
                   Container(
                     decoration: neuBox(),
                     padding: const EdgeInsets.all(18),
@@ -200,11 +182,31 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            Row(
                               children: [
-                                Text("SmartLock", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: isDark ? Colors.white : const Color(0xFF2C3E50))),
-                                const Text("Pati, Jawa Tengah", style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text("SmartLock", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: isDark ? Colors.white : const Color(0xFF2C3E50))),
+                                    const Text("Pati, Jawa Tengah", style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
+                                  ],
+                                ),
+                                const SizedBox(width: 15),
+                                // INDIKATOR LED APLIKASI
+                                Column(
+                                  children: [
+                                    Icon(Icons.circle, color: mqttService.isConnected ? Colors.green : Colors.red, size: 10),
+                                    const Icon(Icons.smartphone, size: 8, color: Colors.grey),
+                                  ],
+                                ),
+                                const SizedBox(width: 8),
+                                // INDIKATOR LED ESP32
+                                Column(
+                                  children: [
+                                    Icon(Icons.circle, color: mqttService.isDeviceOnline ? Colors.blue : Colors.orange, size: 10),
+                                    const Icon(Icons.memory, size: 8, color: Colors.grey),
+                                  ],
+                                ),
                               ],
                             ),
                             Row(
@@ -228,26 +230,15 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
                           height: 60,
                           child: PageView.builder(
                             controller: _infoPageController,
-                            physics: const NeverScrollableScrollPhysics(),
                             itemBuilder: (context, index) => index % 2 == 0
                                 ? Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [_buildStat("SPEED", "0 km/h"), _buildStat("JARAK", "1.2 km"), _buildStat("ETA", "4 m"), _buildStat("SUHU", "32°")])
-                                : Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-                                    _buildStat("BATTERY", "12.8V"),
-                                    _buildStat("FUEL", "85%"),
-                                    // MQTT Status Indicator
-                                    Consumer<MQTTService>(
-                                      builder: (context, mqtt, child) {
-                                        return _buildStat("SIGNAL", mqtt.isConnected ? "Online" : "Offline", color: mqtt.isConnected ? Colors.greenAccent : Colors.redAccent);
-                                      },
-                                    ),
-                                    _buildStat("STATUS", "Aman")
-                                  ]),
+                                : Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [_buildStat("BATTERY", "12.8V"), _buildStat("FUEL", "85%"), _buildStat("LAST", mqttService.statusPower), _buildStat("STATUS", "Aman")]),
                           ),
                         ),
                         Stack(
                           alignment: Alignment.center,
                           children: [
-                            Row(mainAxisAlignment: MainAxisAlignment.center, children: [_buildDot(activePageIndex == 0), const SizedBox(width: 6), _buildDot(activePageIndex == 1)]),
+                            Row(mainAxisAlignment: MainAxisAlignment.center, children: [_buildDot(true), const SizedBox(width: 6), _buildDot(false)]),
                             Positioned(
                               right: 0,
                               child: Text("version 1.0.0 by Mefby", style: TextStyle(fontSize: 8, color: Colors.grey.withOpacity(0.7), fontWeight: FontWeight.bold)),
@@ -257,8 +248,6 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
                       ],
                     ),
                   ),
-
-                  // --- KONTROL UNIT ---
                   Expanded(
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(30),
@@ -281,7 +270,6 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
                                       child: PageView.builder(
                                         controller: _vehiclePageController,
                                         scrollDirection: Axis.vertical,
-                                        physics: const NeverScrollableScrollPhysics(),
                                         itemBuilder: (context, index) => Center(child: Text(index % 2 == 0 ? "Aerox 155 VVA" : "W 3601 QY", style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold))),
                                       ),
                                     ),
@@ -305,20 +293,14 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
                                             children: [
                                               _buildHoldBtn("SEAT", Icons.archive_rounded, isSeatActive, isRelayOn, (val) {
                                                 if (!isRelayOn) {
-                                                  if (val) {
-                                                    _vibrateInstan();
-                                                    mqttService.publish('iot/seat', 'OPEN');
-                                                  }
+                                                  if (val) { _vibrateInstan(); mqttService.publish('iot/seat', 'TRIGGER'); }
                                                   setState(() => isSeatActive = val);
                                                 }
                                               }),
                                               const SizedBox(height: 15),
                                               _buildHoldBtn("FUEL", Icons.local_gas_station_rounded, isFuelActive, isRelayOn, (val) {
                                                 if (!isRelayOn) {
-                                                  if (val) {
-                                                    _vibrateInstan();
-                                                    mqttService.publish('iot/fuel', 'OPEN');
-                                                  }
+                                                  if (val) { _vibrateInstan(); mqttService.publish('iot/fuel', 'TRIGGER'); }
                                                   setState(() => isFuelActive = val);
                                                 }
                                               }),
@@ -368,7 +350,6 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
     );
   }
 
-  // WIDGET HELPERS
   Widget _buildStartButton(MQTTService mqttService) {
     return Stack(
       alignment: Alignment.center,
@@ -385,7 +366,7 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
           onTapDown: (_) {
             if (isRelayOn) {
               _vibrateInstan();
-              mqttService.publish('iot/starter', 'START');
+              mqttService.publish('iot/starter', 'TRIGGER');
               setState(() => isStartActive = true);
             }
           },
@@ -412,7 +393,7 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
 
   Widget _buildVerticalGridBtn(String label, IconData icon, bool isActive, VoidCallback onTap, {bool isDisabled = false}) {
     return GestureDetector(
-      onTap: () { if(!isDisabled) onTap(); }, // Changed to onTap to avoid rapid fire
+      onTap: () { if(!isDisabled) onTap(); },
       child: Opacity(
         opacity: isDisabled ? 0.3 : 1.0,
         child: Container(
@@ -461,12 +442,12 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
 
   Widget _buildDot(bool active) => Container(width: 6, height: 6, decoration: BoxDecoration(shape: BoxShape.circle, color: active ? Colors.blueAccent : Colors.grey.withOpacity(0.3)));
   
-  Widget _buildStat(String label, String value, {Color? color}) {
+  Widget _buildStat(String label, String value) {
     final defaultColor = widget.isDark ? Colors.white : const Color(0xFF2C3E50);
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: color ?? defaultColor)),
+        Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: defaultColor)),
         Text(label, style: const TextStyle(fontSize: 8, color: Colors.grey, fontWeight: FontWeight.bold))
       ]
     );
