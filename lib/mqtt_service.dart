@@ -74,7 +74,6 @@ class MQTTService with ChangeNotifier {
         notifyListeners();
       });
     } catch (e) {
-      print('Exception: $e');
       disconnect();
     }
   }

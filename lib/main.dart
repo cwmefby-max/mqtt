@@ -5,6 +5,10 @@ import 'dart:math' as math;
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vibration/vibration.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'mqtt_service.dart';
 
 void main() {
@@ -80,6 +84,12 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
   bool isFocusActive = false;
   bool isCompassActive = false;
 
+  String _currentAddress = "Mencari lokasi...";
+  StreamSubscription<Position>? _positionStream;
+  LatLng? _currentPosition;
+  late MapController _mapController;
+  bool _isMapFollowing = true;
+
   late AnimationController _scanController;
   late AnimationController _panelController;
   late Animation<Offset> _panelSlideAnimation;
@@ -94,6 +104,7 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
   @override
   void initState() {
     super.initState();
+    _mapController = MapController();
     _infoPageController = PageController(initialPage: _currentVirtualPage);
     _vehiclePageController = PageController(initialPage: _currentVirtualPage);
 
@@ -127,9 +138,69 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
       if (!mqttService.isConnected) {
         mqttService.connect('test.mosquitto.org', 'flutter_gempara_client');
       }
+      _initializeLocationStream();
     });
     _loadButtonStates();
   }
+
+  Future<void> _initializeLocationStream() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        setState(() {
+          _currentAddress = "Izin lokasi ditolak";
+        });
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      setState(() {
+        _currentAddress = "Izin lokasi ditolak permanen";
+      });
+      return;
+    }
+
+    _positionStream = Geolocator.getPositionStream().listen((Position position) async {
+      if (!mounted) return;
+
+      final newPosition = LatLng(position.latitude, position.longitude);
+
+      setState(() {
+        _currentPosition = newPosition;
+      });
+
+      if (_isMapFollowing) {
+        _mapController.move(newPosition, 17.0);
+      }
+
+      try {
+        List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+        if (placemarks.isNotEmpty) {
+          final placemark = placemarks.first;
+          if (mounted) {
+            setState(() {
+              _currentAddress = "${placemark.subLocality}, ${placemark.locality}";
+            });
+          }
+        } else {
+          if (mounted) {
+            setState(() {
+              _currentAddress = "Lokasi tidak ditemukan";
+            });
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _currentAddress = "Gagal mendapatkan lokasi";
+          });
+        }
+      }
+    });
+  }
+
 
   Future<void> _loadButtonStates() async {
     final prefs = await SharedPreferences.getInstance();
@@ -197,14 +268,16 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
     _infoPageController.dispose();
     _vehiclePageController.dispose();
     _vehicleInfoTimer?.cancel();
+    _positionStream?.cancel();
+    _mapController.dispose();
     super.dispose();
   }
 
   BoxDecoration neuBox({bool isPressed = false, double borderRadius = 20, bool isDisabled = false}) {
     bool isDark = widget.isDark;
     Color bg = isDark ? const Color(0xFF1E272E) : const Color(0xFFFDFDFD);
-    if (isDisabled) bg = bg.withOpacity(0.5);
-    Color shadowDark = isDark ? Colors.black.withOpacity(0.4) : const Color(0xFFD1D9E6).withOpacity(0.5);
+    if (isDisabled) bg = bg.withAlpha(128);
+    Color shadowDark = isDark ? Colors.black.withAlpha(102) : const Color(0xFFD1D9E6).withAlpha(128);
 
     return BoxDecoration(
       color: bg,
@@ -231,7 +304,39 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
     return Scaffold(
       body: Stack(
         children: [
-          Container(width: double.infinity, height: double.infinity, color: isDark ? const Color(0xFF151E24) : const Color(0xFFF0F2F5)),
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: _currentPosition ?? LatLng(0, 0),
+              initialZoom: 17.0,
+              onPositionChanged: (position, hasGesture) {
+                if (hasGesture) {
+                  setState(() {
+                    _isMapFollowing = false;
+                  });
+                }
+              },
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: widget.isDark
+                    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+                subdomains: const ['a', 'b', 'c'],
+              ),
+              if (_currentPosition != null)
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      width: 80.0,
+                      height: 80.0,
+                      point: _currentPosition!,
+                      child: const Icon(Icons.location_on, color: Colors.red, size: 40),
+                    ),
+                  ],
+                ),
+            ],
+          ),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(15.0),
@@ -258,7 +363,7 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
                                 ),
                                 const SizedBox(height: 12),
                                 Text("SmartLock", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: isDark ? Colors.white : const Color(0xFF2C3E50))),
-                                const Text("Pati, Jawa Tengah", style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
+                                Text(_currentAddress, style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
                               ],
                             ),
                             Column(
@@ -266,7 +371,7 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
                               children: [
                                 Padding(
                                   padding: const EdgeInsets.only(bottom: 8.0),
-                                  child: Text("version 1.0.0 by Mefby", style: TextStyle(fontSize: 8, color: Colors.grey.withOpacity(0.7), fontWeight: FontWeight.bold)),
+                                  child: Text("version 1.0.0 by Mefby", style: TextStyle(fontSize: 8, color: Colors.grey.withAlpha(178), fontWeight: FontWeight.bold)),
                                 ),
                                 Row(
                                   children: [
@@ -290,7 +395,7 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
                           ],
                         ),
                         const SizedBox(height: 15),
-                        Divider(color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05)),
+                        Divider(color: isDark ? Colors.white.withAlpha(13) : Colors.black.withAlpha(13)),
                         SizedBox(
                           height: 60,
                           child: PageView.builder(
@@ -402,11 +507,24 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildFloatBtn(Icons.my_location_rounded, () { setState(() => isFocusActive = true); Future.delayed(const Duration(milliseconds: 200), () => setState(() => isFocusActive = false)); }, isActive: isFocusActive),
+                  _buildFloatBtn(Icons.my_location_rounded, () {
+                    setState(() {
+                      isFocusActive = true;
+                      _isMapFollowing = true;
+                    });
+                    if (_currentPosition != null) {
+                      _mapController.move(_currentPosition!, 17.0);
+                    }
+                    Future.delayed(const Duration(milliseconds: 200), () => setState(() => isFocusActive = false));
+                  }, isActive: isFocusActive),
                   const SizedBox(width: 25),
                   _buildFloatBtn(Icons.map_rounded, () { setState(() => isRouteActive = !isRouteActive); }, isActive: isRouteActive),
                   const SizedBox(width: 25),
-                  _buildFloatBtn(Icons.explore_rounded, () { setState(() => isCompassActive = true); Future.delayed(const Duration(milliseconds: 200), () => setState(() => isCompassActive = false)); }, isActive: isCompassActive),
+                  _buildFloatBtn(Icons.explore_rounded, () {
+                    setState(() => isCompassActive = true);
+                    _mapController.rotate(0);
+                    Future.delayed(const Duration(milliseconds: 200), () => setState(() => isCompassActive = false));
+                  }, isActive: isCompassActive),
                 ],
               ),
             )
@@ -491,7 +609,7 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 20, color: isActive ? Colors.orangeAccent : (widget.isDark ? Colors.white70 : Colors.black54)),
+              Icon(icon, size: 20, color: isActive ? const Color(0xFFFF7675) : (widget.isDark ? Colors.white70 : Colors.black54)),
               const SizedBox(width: 10),
               Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: widget.isDark ? Colors.white : const Color(0xFF2C3E50))),
             ],
@@ -518,7 +636,7 @@ class _MainNavigatorState extends State<MainNavigator> with TickerProviderStateM
         ),
       );
 
-  Widget _buildDot(bool active) => Container(width: 6, height: 6, decoration: BoxDecoration(shape: BoxShape.circle, color: active ? Colors.blueAccent : Colors.grey.withOpacity(0.3)));
+  Widget _buildDot(bool active) => Container(width: 6, height: 6, decoration: BoxDecoration(shape: BoxShape.circle, color: active ? Colors.greenAccent : Colors.grey.withAlpha(77)));
   
   Widget _buildStat(String label, String value) {
     final defaultColor = widget.isDark ? Colors.white : const Color(0xFF2C3E50);
@@ -582,7 +700,7 @@ class DottedCirclePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final Paint paint = Paint()
-      ..color = Colors.blueAccent.withOpacity(0.6)
+      ..color = Colors.greenAccent.withAlpha(153)
       ..style = PaintingStyle.fill;
 
     double radius = size.width / 2;
